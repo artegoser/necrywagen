@@ -15,3 +15,14 @@ pub fn generate_keys() -> (String, String, String) {
 
     return (address, address_segwit, private_key);
 }
+
+pub fn print_keys(address: String, address_segwit: String, private_key: String) {
+    println!("Address: {}", address);
+    println!("SegWit Address: {}", address_segwit);
+    println!("Private Key: {}", private_key);
+}
+
+pub fn print_gen_keys() {
+    let (address, address_segwit, private_key) = generate_keys();
+    print_keys(address, address_segwit, private_key);
+}
