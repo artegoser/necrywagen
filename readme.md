@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-cargo install onlang
+cargo install necrywagen
 ```
 
 ## Usage
