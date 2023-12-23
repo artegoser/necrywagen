@@ -3,22 +3,18 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Instant;
 
-use crate::{check, gen, load};
+use crate::{check, gen, load, print_progress};
 
-pub fn collide(path: String, threads: Option<u32>) {
+pub fn collide(path: String, threads: u32) {
     println!("NeCryWaGen - Collider\n");
 
     let adresses = load::load_adresses(&path);
 
     println!("Loaded {} addresses\n", adresses.len());
-
-    let start = Instant::now();
+    println!("Threads: {}", threads);
 
     let k = 0;
-
-    let threads = threads.unwrap_or(16);
-
-    println!("Threads: {}", threads);
+    let start = Instant::now();
 
     let adresses_mutex = Arc::new(Mutex::new(adresses));
     let k_mutex = Arc::new(Mutex::new(k));
@@ -38,21 +34,7 @@ pub fn collide(path: String, threads: Option<u32>) {
                         // TODO: if found then transfer all btc from that address to my wallet
                     }
 
-                    // Increment k and check for the 10000th iteration
-
-                    let mut k = k_mutex.lock().unwrap();
-                    *k += 1;
-
-                    if *k % 100000 == 0 {
-                        let duration = start.elapsed();
-                        print!(
-                            " {} keys; {} keys/sec; {:?}\t\t",
-                            k.to_formatted_string(&Locale::en),
-                            *k as f64 / duration.as_secs_f64(),
-                            duration
-                        );
-                    }
-                    print!("\r");
+                    print_progress!(k_mutex, start, Locale::en);
                 }
             })
         })

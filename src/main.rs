@@ -8,6 +8,9 @@ mod load;
 mod collider;
 mod matcher;
 
+#[macro_use]
+mod utils;
+
 #[derive(Debug, Parser)] // requires `derive` feature
 #[command(name = "necrywagen", bin_name = "necrywagen")]
 #[command(about = "Crypto key generator", long_about = None)]
@@ -20,7 +23,27 @@ struct Cli {
 #[clap(author, version, about, long_about = None)]
 enum Commands {
     /// Generate keys
-    Gen,
+    Gen {
+        /// Save keys to .tsv file (adress   segwit  privkey)
+        #[clap(short, long)]
+        save: bool,
+
+        /// Path to output file
+        #[clap(short, long, default_value = "./keys.tsv")]
+        output: String,
+
+        /// Number of keys
+        #[clap(short, long, default_value = "1")]
+        count: u32,
+
+        /// Write head to .tsv file
+        #[clap(long)]
+        head: bool,
+
+        /// Rewrite output file
+        #[clap(short, long)]
+        rewrite: bool,
+    },
 
     /// Run collider
     #[command(arg_required_else_help = true)]
@@ -29,8 +52,8 @@ enum Commands {
         path: String,
 
         /// Number of threads
-        #[clap(long)]
-        threads: Option<u32>,
+        #[clap(short, long, default_value = "1")]
+        threads: u32,
     },
 
     /// Match str in generated keys
@@ -39,8 +62,8 @@ enum Commands {
         match_str: String,
 
         /// Number of threads
-        #[clap(long)]
-        threads: Option<u32>,
+        #[clap(short, long, default_value = "1")]
+        threads: u32,
     },
 }
 
@@ -54,8 +77,14 @@ fn main() {
     let args = Cli::parse();
 
     match args.cmd {
-        Commands::Gen => {
-            gen::print_gen_keys();
+        Commands::Gen {
+            save,
+            output,
+            count,
+            head,
+            rewrite,
+        } => {
+            gen::gen(save, output, count, head, rewrite);
         }
         Commands::Collide { path, threads } => {
             collider::collide(path, threads);
@@ -64,4 +93,6 @@ fn main() {
             matcher::match_adresses(match_str, threads);
         }
     }
+
+    println!();
 }

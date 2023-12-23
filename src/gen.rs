@@ -1,6 +1,15 @@
 use bitcoin::secp256k1::{rand, Secp256k1};
 use bitcoin::{Address, Network, PrivateKey, PublicKey};
 
+use num_format::{Locale, ToFormattedString};
+use std::fs::OpenOptions;
+
+// use std::io::Write;
+use std::io::{self, Write};
+use std::time::Instant;
+
+use crate::{not_mutex_print_progress, print_force};
+
 pub fn generate_keys() -> (String, String, String) {
     // Generate random key pair.
     let s = Secp256k1::new();
@@ -22,7 +31,36 @@ pub fn print_keys(address: String, address_segwit: String, private_key: String) 
     println!("Private Key: {}", private_key);
 }
 
-pub fn print_gen_keys() {
-    let (address, address_segwit, private_key) = generate_keys();
-    print_keys(address, address_segwit, private_key);
+pub fn gen(save: bool, output: String, count: u32, head: bool, rewrite: bool) {
+    println!("NeCryWaGen - Generator\n-----------------\n");
+
+    let mut k = 0;
+
+    let start = Instant::now();
+
+    let mut file: Box<dyn Write + Send> = if save {
+        Box::new(
+            OpenOptions::new()
+                .write(rewrite)
+                .append(!rewrite)
+                .create(true)
+                .truncate(rewrite)
+                .open(&output)
+                .unwrap(),
+        )
+    } else {
+        Box::new(io::stdout())
+    };
+
+    if head {
+        writeln!(file, "Address\tSegWit\tPrivate").unwrap();
+    }
+
+    loop {
+        let keys = generate_keys();
+        writeln!(file, "{}\t{}\t{}", keys.0, keys.1, keys.2).unwrap();
+        not_mutex_print_progress!(k, start, Locale::fr, count);
+    }
+
+    print_force!(k, start, Locale::fr);
 }

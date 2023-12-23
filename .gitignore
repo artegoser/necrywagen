@@ -130,3 +130,5 @@ dist
 # Added by cargo
 
 /target
+
+./keys.tsv

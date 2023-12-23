@@ -4,18 +4,16 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Instant;
 
-use crate::{check, gen};
+use crate::{check, gen, print_progress};
 
-pub fn match_adresses(match_str: String, threads: Option<u32>) {
+pub fn match_adresses(match_str: String, threads: u32) {
     println!("NeCryWaGen - Matcher\n-----------------\n");
-    let start = Instant::now();
+    println!("Threads: {}", threads);
 
     let k = 0;
-
-    let threads = threads.unwrap_or(16);
     let regex = Regex::new(&match_str).unwrap();
 
-    println!("Threads: {}", threads);
+    let start = Instant::now();
 
     let k_mutex = Arc::new(Mutex::new(k));
 
@@ -24,32 +22,15 @@ pub fn match_adresses(match_str: String, threads: Option<u32>) {
             let k_mutex = Arc::clone(&k_mutex);
             let regex = regex.clone();
 
-            thread::spawn(move || {
-                loop {
-                    let keys = gen::generate_keys();
+            thread::spawn(move || loop {
+                let keys = gen::generate_keys();
 
-                    if check::is_match(&regex, &keys) {
-                        println!("---");
-                        gen::print_keys(keys.0, keys.1, keys.2);
-                        println!("---")
-                    }
-
-                    // Increment k and check for the 10000th iteration
-
-                    let mut k = k_mutex.lock().unwrap();
-                    *k += 1;
-
-                    if *k % 100000 == 0 {
-                        let duration = start.elapsed();
-                        print!(
-                            " {} keys; {} keys/sec; {:?}\t\t",
-                            k.to_formatted_string(&Locale::en),
-                            *k as f64 / duration.as_secs_f64(),
-                            duration
-                        );
-                    }
-                    print!("\r");
+                if check::is_match(&regex, &keys) {
+                    println!("---");
+                    gen::print_keys(keys.0, keys.1, keys.2);
                 }
+
+                print_progress!(k_mutex, start, Locale::fr);
             })
         })
         .collect();
